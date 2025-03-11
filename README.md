@@ -1,8 +1,10 @@
+![image](https://github.com/user-attachments/assets/1fd8eb0a-7306-495f-b043-cea822427560)
+![image](https://github.com/user-attachments/assets/c1ffa583-c698-44a5-a82c-c365e5c8987c)
+
 ```markdown
 # AI 관상 서비스 (Ollama 기반)
 
-![image](https://github.com/user-attachments/assets/1fd8eb0a-7306-495f-b043-cea822427560)
-![image](https://github.com/user-attachments/assets/c1ffa583-c698-44a5-a82c-c365e5c8987c)
+
 
 
 
