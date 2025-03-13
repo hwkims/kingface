@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>👑 AI 관상 카메라</title>
+    <title>👑 AI 관상 카메라 (WebGazer)</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -47,16 +47,11 @@
             max-width: 640px;
             height: auto;
         }
-        video {
+        #webgazerVideoFeed {
             width: 100%;
             height: auto;
             display: block;
-        }
-        #overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            pointer-events: none;
+            transform: scale(-1, 1); /* WebGazer 기본 설정 */
         }
         #results {
             width: 100%;
@@ -69,7 +64,6 @@
             margin-bottom: 15px;
             font-size: 22px;
         }
-
         #results p {
             margin: 8px 0;
             line-height: 1.5;
@@ -79,9 +73,7 @@
             align-items: center;
             border-bottom: 1px solid #eee;
             padding-bottom: 6px;
-
         }
-
         .metric-label {
             font-weight: 500;
             color: #555;
@@ -94,15 +86,11 @@
         .hidden {
             display: none;
         }
-
         #start-btn {
             background: linear-gradient(135deg, #6A82FB, #FC5C7D);
             border: none;
             color: white;
             padding: 15px 30px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
             font-size: 18px;
             margin: 20px;
             cursor: pointer;
@@ -111,12 +99,10 @@
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             font-weight: 500;
         }
-
         #start-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
-
         .loading {
             text-align: center;
             font-style: italic;
@@ -124,44 +110,40 @@
             margin-top: 15px;
             font-size: 0.9em;
         }
-        #extra-info{
-            margin-top:1rem;
+        #extra-info {
+            margin-top: 1rem;
             text-align: center;
         }
-
     </style>
 </head>
 <body>
-    <h1>👑 AI 관상 카메라</h1>
-    <p>웹캠 또는 모바일 카메라를 사용하여 얼굴을 분석하고 재미있는 관상 정보를 확인하세요!</p>
+    <h1>👑 AI 관상 카메라 (WebGazer)</h1>
+    <p>눈 추적과 얼굴 분석으로 재미있는 관상 정보를 확인하세요!</p>
 
     <button id="start-btn">카메라 시작</button>
 
     <div id="container" class="hidden">
-        <div id="video-container">
-            <video id="video" autoplay muted playsinline></video>
-            <canvas id="overlay"></canvas>
-        </div>
+        <div id="video-container"></div>
         <div id="results">
             <h2>관상 분석 결과</h2>
-            <p><span class="metric-label">나이:</span><span class="metric-value" id="age"></span></p>
-            <p><span class="metric-label">성별:</span><span class="metric-value" id="gender"></span></p>
+            <p><span class="metric-label">추정 나이:</span><span class="metric-value" id="age"></span></p>
+            <p><span class="metric-label">추정 성별:</span><span class="metric-value" id="gender"></span></p>
             <p><span class="metric-label">표정:</span><span class="metric-value" id="emotion"></span></p>
             <p><span class="metric-label">행복 지수:</span><span class="metric-value" id="happiness"></span></p>
             <p><span class="metric-label">왕이 될 상:</span><span class="metric-value" id="king-score"></span></p>
             <p><span class="metric-label">연예인 가능성:</span><span class="metric-value" id="celebrity-score"></span></p>
             <p><span class="metric-label">오늘의 운세:</span><span class="metric-value" id="fortune"></span></p>
-             <p class = "extra-info" id="extra-info"></p>
-            <div class="loading hidden" id="loading-message">분석 중...</div>
+            <p class="extra-info" id="extra-info"></p>
+            <div class="loading" id="loading-message">분석 중...</div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <!-- WebGazer.js 라이브러리 -->
+    <script src="https://webgazer.cs.brown.edu/webgazer.js"></script>
     <script>
         const startButton = document.getElementById('start-btn');
-        const video = document.getElementById('video');
-        const overlay = document.getElementById('overlay');
         const container = document.getElementById('container');
+        const videoContainer = document.getElementById('video-container');
         const ageSpan = document.getElementById('age');
         const genderSpan = document.getElementById('gender');
         const emotionSpan = document.getElementById('emotion');
@@ -172,182 +154,108 @@
         const extraInfoP = document.getElementById('extra-info');
         const loadingMessage = document.getElementById('loading-message');
 
-
         let isRunning = false;
-        let videoStream = null; // Store the video stream
 
-        // Corrected model loading with explicit paths
-        async function loadModels() {
-            const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/models/';
+        // WebGazer 초기화 및 분석 시작
+        async function initializeWebGazer() {
             try {
-                // Explicitly load the weight manifest files.
-                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL + 'tiny_face_detector_model-weights_manifest.json');
-                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL + 'face_landmark_68_model-weights_manifest.json');
-                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL + 'face_recognition_model-weights_manifest.json');
-                await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL + 'face_expression_model-weights_manifest.json');
-                await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL + 'age_gender_model-weights_manifest.json');
-                console.log("Models loaded successfully!");
-                return true;
+                webgazer.showVideo(true); // 비디오 피드 표시
+                webgazer.setGazeListener(analyzeFace).begin();
+
+                // WebGazer의 비디오 요소를 수동으로 video-container에 추가
+                const videoFeed = document.getElementById('webgazerVideoFeed');
+                videoContainer.appendChild(videoFeed);
+
+                startButton.classList.add('hidden');
+                container.classList.remove('hidden');
+                loadingMessage.classList.remove('hidden');
             } catch (error) {
-                console.error("Error loading models:", error);
-                alert("모델 로딩 중 오류 발생! 페이지를 새로고침 해주세요.");
-                return false;
+                console.error("WebGazer 초기화 오류:", error);
+                alert("카메라 접근 오류! 권한을 확인하고 다시 시도해주세요.");
             }
         }
 
+        // 얼굴 분석 함수
+        function analyzeFace(data, elapsedTime) {
+            if (!data || !isRunning) return;
 
-        // Initialize everything (models and webcam)
-        async function initialize() {
-            const modelsLoaded = await loadModels();
-            if (!modelsLoaded) {
-                return; // Exit if models failed to load
-            }
-
-            try {
-                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-                video.srcObject = videoStream;
-
-                // *** Use 'loadeddata' event ***
-                video.addEventListener('loadeddata', () => {
-                     // Set canvas dimensions *after* video metadata is loaded
-                    overlay.width = video.videoWidth;
-                    overlay.height = video.videoHeight;
-                    if (!isRunning) {
-                        isRunning = true;
-                        analyzeFace(); // Start analysis
-                    }
-
-                });
-
-            } catch (err) {
-                console.error('Error accessing webcam:', err);
-                alert("웹캠 접근 오류! 권한을 확인하고 다시 시도해주세요.");
-                 // Hide the video container and show an error message within the #results div
-                container.classList.add('hidden');
-                resultsDiv.classList.remove('hidden');
-                resultsDiv.innerHTML = `<p>웹캠 접근 오류: ${err.message}</p>`;
-            }
-        }
-
-
-
-        async function analyzeFace() {
-            if (!isRunning) return;
-            loadingMessage.classList.remove('hidden');
-            try {
-                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
-                    .withFaceLandmarks()
-                    .withFaceExpressions()
-                    .withAgeAndGender();
-                const resizedDetections = faceapi.resizeResults(detections, { width: video.videoWidth, height: video.videoHeight });
-                loadingMessage.classList.add('hidden');
-                if (resizedDetections.length > 0) {
-                    displayResults(resizedDetections[0]);
-                    drawDetections(resizedDetections[0]);
-                } else {
-                    clearOverlay();
-                    clearResults();
-                }
-            } catch (error) {
-                console.error("Error during face analysis:", error);
-                alert("얼굴 분석 중 오류 발생. 다시 시도해주세요.");
-                isRunning = false;
+            const prediction = webgazer.getCurrentPrediction();
+            if (!prediction || !prediction.landmarks) {
+                clearResults();
                 return;
             }
-            requestAnimationFrame(analyzeFace);
+
+            loadingMessage.classList.add('hidden');
+            displayResults(prediction.landmarks);
         }
 
+        // 결과 표시 함수
+        function displayResults(landmarks) {
+            // 랜드마크 데이터로 관상 분석
+            const jawOutline = landmarks.slice(0, 17); // 턱선
+            const nose = landmarks.slice(27, 36); // 코
+            const mouth = landmarks.slice(48, 68); // 입
+            const leftEye = landmarks.slice(36, 42); // 왼쪽 눈
+            const rightEye = landmarks.slice(42, 48); // 오른쪽 눈
+            const leftEyeBrow = landmarks.slice(17, 22); // 왼쪽 눈썹
+            const rightEyeBrow = landmarks.slice(22, 27); // 오른쪽 눈썹
 
-        function displayResults(detection) {
-            const age = Math.round(detection.age);
-            const gender = detection.gender === 'male' ? '남성' : '여성';
-            const expressions = detection.expressions;
-            let maxExpression = '';
-            let maxProbability = 0;
-
-            for (const [expression, probability] of Object.entries(expressions)) {
-                if (probability > maxProbability) {
-                    maxProbability = probability;
-                    maxExpression = expression;
-                }
-            }
-
-            const expressionTranslations = {  neutral: '무표정', happy: '행복', sad: '슬픔', angry: '화남', fearful: '두려움', disgusted: '역겨움', surprised: '놀람'};
-            const translatedExpression = expressionTranslations[maxExpression] || '알 수 없음';
-            const happiness = Math.round(expressions.happy * 100);
-
-            const landmarks = detection.landmarks;
-            const jawOutline = landmarks.getJawOutline();
-            const nose = landmarks.getNose();
-            const mouth = landmarks.getMouth();
-            const leftEye = landmarks.getLeftEye();
-            const rightEye = landmarks.getRightEye();
-            const leftEyeBrow = landmarks.getLeftEyeBrow();
-            const rightEyeBrow = landmarks.getRightEyeBrow();
             const faceWidth = Math.abs(jawOutline[0].x - jawOutline[16].x);
-            const leftEyebrowLength = Math.abs(leftEyeBrow[0].x - leftEyeBrow[4].x);
-            const rightEyebrowLength = Math.abs(rightEyeBrow[0].x - rightEyeBrow[4].x);
-            const eyebrowLength = (leftEyebrowLength + rightEyebrowLength) / 2;
-            const leftEyeWidth = Math.abs(leftEye[0].x - leftEye[3].x);
-            const leftEyeHeight = Math.abs(leftEye[1].y - leftEye[5].y);
-            const rightEyeWidth = Math.abs(rightEye[0].x - rightEye[3].x);
-            const rightEyeHeight = Math.abs(rightEye[1].y - rightEye[5].y);
-            const eyeSize = ((leftEyeWidth + rightEyeWidth) / 2 + (leftEyeHeight + rightEyeHeight) / 2) / 2;
-            const noseLength = Math.abs(nose[0].y - nose[6].y);
-            const noseWidth = Math.abs(nose[12].x - nose[6].x);
+            const eyebrowLength = (Math.abs(leftEyeBrow[0].x - leftEyeBrow[4].x) + Math.abs(rightEyeBrow[0].x - rightEyeBrow[4].x)) / 2;
+            const eyeSize = (Math.abs(leftEye[0].x - leftEye[3].x) + Math.abs(rightEye[0].x - rightEye[3].x)) / 2;
+            const noseLength = Math.abs(nose[0].y - nose[8].y);
+            const noseWidth = Math.abs(nose[3].x - nose[5].x);
             const lipWidth = Math.abs(mouth[0].x - mouth[6].x);
+            const mouthHeight = Math.abs(mouth[14].y - mouth[18].y); // 입 열림 정도
 
+            // 추정 나이 (랜덤 값, WebGazer는 나이 추정 없음)
+            const age = Math.floor(Math.random() * 50) + 20;
+
+            // 추정 성별 (눈썹 길이와 얼굴 비율로 단순 추정)
+            const gender = eyebrowLength / faceWidth > 0.25 ? '여성' : '남성';
+
+            // 표정 및 행복 지수 (입 열림 정도 기반)
+            const happiness = Math.min(100, Math.round((mouthHeight / faceWidth) * 200));
+            const emotion = happiness > 60 ? '행복' : happiness > 30 ? '무표정' : '슬픔';
+
+            // 왕이 될 상 (눈썹, 눈, 코, 입 비율로 계산)
             let kingScore = 0;
-            kingScore += (eyebrowLength / faceWidth) * 100 * 0.3
-            kingScore += (eyeSize / faceWidth) * 100 * 0.2
-            kingScore += (noseLength / faceWidth) * 100 * 0.2
+            kingScore += (eyebrowLength / faceWidth) * 100 * 0.3;
+            kingScore += (eyeSize / faceWidth) * 100 * 0.2;
+            kingScore += (noseLength / faceWidth) * 100 * 0.2;
             kingScore += (noseWidth / faceWidth) * 100 * 0.1;
             kingScore += (lipWidth / faceWidth) * 100 * 0.2;
+            kingScore = Math.min(100, kingScore);
 
+            // 연예인 가능성 (눈 크기, 행복 지수, 코 너비 기반)
             let celebrityScore = 0;
             celebrityScore += (100 - Math.abs(50 - (eyeSize / faceWidth) * 100)) * 0.4;
             celebrityScore += happiness * 0.4;
-            celebrityScore += (noseWidth / faceWidth) * 100 * 0.2
+            celebrityScore += (noseWidth / faceWidth) * 100 * 0.2;
             celebrityScore = Math.min(100, celebrityScore);
 
-            const fortunes = ["오늘 하루, 뜻밖의 행운이 찾아올 거예요!", "새로운 인연이 당신을 기다리고 있어요.", "작은 친절이 큰 기쁨으로 돌아올 거예요.", "오늘은 왠지 모든 일이 잘 풀릴 것 같은 기분이 드네요!", "긍정적인 에너지가 가득한 하루가 될 거예요.", "어려움을 극복하고 목표를 달성할 수 있을 거예요.", "숨겨진 재능을 발견하고 깜짝 놀랄 일이 생길지도 몰라요.", "오늘은 평소보다 더 매력적으로 보일 거예요.", "작은 것에 감사하는 마음이 행복을 가져다줄 거예요.", "기대하지 않았던 곳에서 좋은 소식이 들려올 거예요."];
+            // 오늘의 운세
+            const fortunes = [
+                "오늘 하루, 뜻밖의 행운이 찾아올 거예요!",
+                "새로운 인연이 당신을 기다리고 있어요.",
+                "작은 친절이 큰 기쁨으로 돌아올 거예요.",
+                "오늘은 모든 일이 잘 풀릴 것 같은 날이에요!",
+                "긍정적인 에너지가 가득한 하루가 될 거예요."
+            ];
             const randomFortune = fortunes[Math.floor(Math.random() * fortunes.length)];
 
+            // 결과 업데이트
             ageSpan.textContent = `${age}세`;
             genderSpan.textContent = gender;
-            emotionSpan.textContent = translatedExpression;
+            emotionSpan.textContent = emotion;
             happinessSpan.textContent = `${happiness}%`;
             kingScoreSpan.textContent = `${kingScore.toFixed(1)}%`;
             celebrityScoreSpan.textContent = `${celebrityScore.toFixed(1)}%`;
             fortuneSpan.textContent = randomFortune;
-            extraInfoP.textContent = "주의: 이 결과는 재미를 위한 것이며, 실제 관상과는 다를 수 있습니다.";
-            resultsDiv.classList.remove('hidden');
+            extraInfoP.textContent = "주의: 이 결과는 WebGazer 기반의 재미용 분석입니다.";
         }
 
-        function drawDetections(detection) {
-            const context = overlay.getContext('2d');
-            context.clearRect(0, 0, overlay.width, overlay.height);
-            const landmarks = detection.landmarks;
-            if (landmarks) {
-                context.fillStyle = 'red';
-                for (let i = 0; i < landmarks.positions.length; i++) {
-                    const point = landmarks.positions[i];
-                    context.beginPath();
-                    context.arc(point.x, point.y, 2, 0, 2 * Math.PI);
-                    context.fill();
-                }
-            }
-            const box = detection.detection.box;
-            context.strokeStyle = 'green';
-            context.lineWidth = 2;
-            context.strokeRect(box.x, box.y, box.width, box.height);
-        }
-
-        function clearOverlay() {
-            const context = overlay.getContext('2d');
-            context.clearRect(0, 0, overlay.width, overlay.height);
-        }
-
+        // 결과 초기화
         function clearResults() {
             ageSpan.textContent = '';
             genderSpan.textContent = '';
@@ -359,13 +267,16 @@
             extraInfoP.textContent = '';
         }
 
-
-        // Start everything when the button is clicked
+        // 버튼 클릭 시 시작
         startButton.addEventListener('click', async () => {
-            startButton.classList.add('hidden');
-            container.classList.remove('hidden');
-            await initialize(); // Initialize models and webcam
+            isRunning = true;
+            await initializeWebGazer();
         });
+
+        // 페이지 종료 시 정리
+        window.onbeforeunload = function() {
+            webgazer.end();
+        };
     </script>
 </body>
 </html>
