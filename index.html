@@ -6,88 +6,86 @@
     <title>👑 AI 관상 카메라</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; /* 애플 시스템 폰트 */
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-color: #f7f7f7; /* 밝은 회색 배경 */
+            background-color: #f7f7f7;
             margin: 0;
             padding: 0;
-            height: 100vh; /* 전체 높이 */
-            overflow: hidden; /* 스크롤 방지 */
+            height: 100vh;
+            overflow: hidden;
         }
         h1 {
             color: #333;
             margin-top: 20px;
             margin-bottom: 10px;
             text-align: center;
-            font-size: 28px; /* 폰트 크기 조정 */
-            font-weight: 600;  /* 폰트 굵기 */
-
+            font-size: 28px;
+            font-weight: 600;
         }
         p {
             color: #666;
             text-align: center;
             margin-bottom: 20px;
             line-height: 1.5;
-            max-width: 80%; /* 설명 최대 너비 */
+            max-width: 80%;
         }
         #container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* 그림자 효과 */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             border-radius: 12px;
-            overflow: hidden; /* 내부 컨텐츠가 둥근 모서리를 넘지 않도록 */
+            overflow: hidden;
             background-color: white;
-            max-width: 90%; /* 최대 너비 */
+            max-width: 90%;
         }
         #video-container {
             position: relative;
-            width: 100%; /* 컨테이너에 꽉 차게 */
-            max-width: 640px; /* 최대 너비 제한 */
-            height: auto; /* 가로 세로 비율 유지 */
+            width: 100%;
+            max-width: 640px;
+            height: auto;
         }
         video {
             width: 100%;
             height: auto;
-            display: block; /* 불필요한 공간 제거 */
-
+            display: block;
         }
         #overlay {
             position: absolute;
             top: 0;
             left: 0;
-            pointer-events: none; /* 캔버스가 클릭 이벤트 가로채는 것 방지 */
+            pointer-events: none;
         }
         #results {
             width: 100%;
             padding: 20px;
-            box-sizing: border-box; /* 패딩이 너비에 포함되도록 */
+            box-sizing: border-box;
         }
         #results h2 {
             color: #333;
             text-align: center;
             margin-bottom: 15px;
-            font-size: 22px; /* 폰트 크기 조정 */
+            font-size: 22px;
         }
 
         #results p {
             margin: 8px 0;
             line-height: 1.5;
             color: #444;
-            display: flex; /* Flexbox 사용 */
-            justify-content: space-between; /* 레이블과 값을 양쪽 정렬 */
-            align-items: center; /* 세로 중앙 정렬 */
-            border-bottom: 1px solid #eee; /* 구분선 */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
             padding-bottom: 6px;
 
         }
 
         .metric-label {
-            font-weight: 500; /* 폰트 굵기 */
+            font-weight: 500;
             color: #555;
-            margin-right: 10px; /* 간격 */
+            margin-right: 10px;
         }
         .metric-value {
             font-size: 1em;
@@ -97,9 +95,8 @@
             display: none;
         }
 
-        /* 버튼 스타일 */
         #start-btn {
-            background: linear-gradient(135deg, #6A82FB, #FC5C7D); /* 그라데이션 */
+            background: linear-gradient(135deg, #6A82FB, #FC5C7D);
             border: none;
             color: white;
             padding: 15px 30px;
@@ -107,17 +104,17 @@
             text-decoration: none;
             display: inline-block;
             font-size: 18px;
-            margin: 20px; /* 버튼 주변 여백 */
+            margin: 20px;
             cursor: pointer;
-            border-radius: 25px; /* 더 둥근 버튼 */
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); /* 그림자 */
-            transition: transform 0.2s ease, box-shadow 0.2s ease; /* 부드러운 전환 */
+            border-radius: 25px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
             font-weight: 500;
         }
 
         #start-btn:hover {
-            transform: translateY(-2px); /* 위로 살짝 이동 */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* 그림자 확대 */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
 
         .loading {
@@ -125,14 +122,12 @@
             font-style: italic;
             color: #999;
             margin-top: 15px;
-            font-size: 0.9em; /* 폰트 크기 */
+            font-size: 0.9em;
         }
-
-        #extra-info{
+         #extra-info{
             margin-top:1rem;
             text-align: center;
         }
-
 
     </style>
 </head>
@@ -156,20 +151,17 @@
             <p><span class="metric-label">왕이 될 상:</span><span class="metric-value" id="king-score"></span></p>
             <p><span class="metric-label">연예인 가능성:</span><span class="metric-value" id="celebrity-score"></span></p>
             <p><span class="metric-label">오늘의 운세:</span><span class="metric-value" id="fortune"></span></p>
-            <p class = "extra-info" id="extra-info"></p>
+             <p class = "extra-info" id="extra-info"></p>
             <div class="loading hidden" id="loading-message">분석 중...</div>
-
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script>
         const startButton = document.getElementById('start-btn');
-        const videoContainer = document.getElementById('video-container');
         const video = document.getElementById('video');
         const overlay = document.getElementById('overlay');
         const container = document.getElementById('container');
-        const resultsDiv = document.getElementById('results');
         const ageSpan = document.getElementById('age');
         const genderSpan = document.getElementById('gender');
         const emotionSpan = document.getElementById('emotion');
@@ -180,11 +172,11 @@
         const extraInfoP = document.getElementById('extra-info');
         const loadingMessage = document.getElementById('loading-message');
 
-        let isRunning = false; //분석 실행 중인지
+        let isRunning = false;
 
-        // 모델 로드 (비동기, CDN 경로 수정)
+        // Corrected model loading with jsDelivr
         async function loadModels() {
-            const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/models/';  // 상대 경로 -> 절대 경로 (CDN)
+            const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/models/'; // Corrected URL
             try {
                 await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
@@ -192,88 +184,59 @@
                 await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
                 await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
                 console.log("Models loaded successfully!");
-                return true; //성공
-
+                return true;
             } catch (error) {
                 console.error("Error loading models:", error);
                 alert("모델 로딩 중 오류 발생! 페이지를 새로고침 해주세요.");
-                return false;//실패
+                return false;
             }
         }
 
-
-        // 웹캠 시작
         async function startVideo() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: "user" // 전면 카메라 (기본값), 후면 카메라는 "environment"
-                    }
-                });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
                 video.srcObject = stream;
-
-                // 비디오 메타데이터 로드 완료 후, 분석 시작 및 캔버스 설정
-                video.addEventListener('loadedmetadata', () => {
-                     // 캔버스 크기를 비디오 크기로 설정 *처음에 한 번만*
+                video.onloadedmetadata = () => {
                     overlay.width = video.videoWidth;
                     overlay.height = video.videoHeight;
-
                     if (!isRunning) {
-                        isRunning = true; //분석 시작
-                        analyzeFace(); //최초 실행
+                        isRunning = true;
+                        analyzeFace();
                     }
-                });
-
-
+                };
             } catch (err) {
                 console.error('Error accessing webcam:', err);
                 alert("웹캠 접근 오류! 권한을 확인하고 다시 시도해주세요.");
             }
         }
 
-        //얼굴 분석 함수 (비동기)
         async function analyzeFace() {
-
-            if (!isRunning) return; //분석 중 아니면, 종료
-
-            loadingMessage.classList.remove('hidden'); //로딩 메시지 표시
-
+            if (!isRunning) return;
+            loadingMessage.classList.remove('hidden');
             try {
-
                 const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
                     .withFaceLandmarks()
                     .withFaceExpressions()
                     .withAgeAndGender();
-
-                //  결과 컨테이너 크기에 맞게 리사이징
-                const resizedDetections = faceapi.resizeResults(detections, { width: video.videoWidth, height: video.videoHeight});
-
-
-                loadingMessage.classList.add('hidden'); //로딩 메시지 숨김
-
-                if (resizedDetections.length > 0) { // 감지된 경우에만
-                    displayResults(resizedDetections[0]); // 첫 번째 얼굴 결과
-                    drawDetections(resizedDetections[0]); // 첫번째 얼굴
+                const resizedDetections = faceapi.resizeResults(detections, { width: video.videoWidth, height: video.videoHeight });
+                loadingMessage.classList.add('hidden');
+                if (resizedDetections.length > 0) {
+                    displayResults(resizedDetections[0]);
+                    drawDetections(resizedDetections[0]);
                 } else {
-                    // 얼굴이 감지되지 않은 경우
                     clearOverlay();
                     clearResults();
-
                 }
             } catch (error) {
                 console.error("Error during face analysis:", error);
                 alert("얼굴 분석 중 오류 발생. 다시 시도해주세요.");
-                isRunning = false; //오류 발생시, 분석 중단
+                isRunning = false;
                 return;
             }
-
-            // requestAnimationFrame을 사용하여 부드럽게 반복
             requestAnimationFrame(analyzeFace);
         }
 
-
-        // 결과 표시 함수
-        function displayResults(detection) {
+         function displayResults(detection) {
 
             const age = Math.round(detection.age); // 반올림
             const gender = detection.gender === 'male' ? '남성' : '여성';
@@ -382,49 +345,28 @@
             fortuneSpan.textContent = randomFortune;
             extraInfoP.textContent = "주의: 이 결과는 재미를 위한 것이며, 실제 관상과는 다를 수 있습니다.";
 
-
             resultsDiv.classList.remove('hidden'); // 결과 표시
-
         }
 
 
-        // 캔버스에 표시 (얼굴 영역, 랜드마크) - 수정됨
         function drawDetections(detection) {
             const context = overlay.getContext('2d');
-            context.clearRect(0, 0, overlay.width, overlay.height); // 이전 프레임 지우기
-
-            // 1. 커스텀 스타일로 랜드마크 그리기 (점)
+            context.clearRect(0, 0, overlay.width, overlay.height);
             const landmarks = detection.landmarks;
-             if (landmarks) { // 랜드마크가 있을 때만
-                context.fillStyle = 'red'; // 점 색상
+            if (landmarks) {
+                context.fillStyle = 'red';
                 for (let i = 0; i < landmarks.positions.length; i++) {
                     const point = landmarks.positions[i];
                     context.beginPath();
-                    context.arc(point.x, point.y, 2, 0, 2 * Math.PI); // 작은 원 (반지름 2)
+                    context.arc(point.x, point.y, 2, 0, 2 * Math.PI);
                     context.fill();
                 }
             }
-
-            // 2. 얼굴 윤곽선 (faceapi.draw.drawFaceLandmarks 사용 안 함)
-            // const jawOutline = landmarks.getJawOutline();
-            // context.strokeStyle = 'blue'; // 윤곽선 색상
-            // context.lineWidth = 2; // 윤곽선 두께
-            // context.beginPath();
-            // context.moveTo(jawOutline[0].x, jawOutline[0].y);
-            // for (let i = 1; i < jawOutline.length; i++) {
-            //     context.lineTo(jawOutline[i].x, jawOutline[i].y);
-            // }
-            // context.stroke();
-
-
-            // 3. bounding box 그리기 (faceapi.draw.drawDetections 사용 안함)
             const box = detection.detection.box;
-            context.strokeStyle = 'green'; // 박스 색상
+            context.strokeStyle = 'green';
             context.lineWidth = 2;
             context.strokeRect(box.x, box.y, box.width, box.height);
         }
-
-
 
         function clearOverlay() {
             const context = overlay.getContext('2d');
@@ -442,15 +384,11 @@
             extraInfoP.textContent = '';
         }
 
-
-
-        // 시작 버튼 클릭 이벤트
         startButton.addEventListener('click', async () => {
-            const modelsLoaded = await loadModels(); // 모델 로드 (비동기)
-            if (!modelsLoaded) return; //모델 로드 실패했다면, 종료
-
-            startButton.classList.add('hidden'); // 시작 버튼 숨김
-            container.classList.remove('hidden'); // 비디오 컨테이너 표시
+            const modelsLoaded = await loadModels();
+            if (!modelsLoaded) return;
+            startButton.classList.add('hidden');
+            container.classList.remove('hidden');
             startVideo();
         });
     </script>
